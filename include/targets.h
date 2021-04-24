@@ -27,13 +27,13 @@ typedef struct {
 } Target;
 
 /* Init the known targets with their needles and names */
-void initTargets(Target targets[MAX_TARGETS]);
+void initTargets(Target *targets);
 
 /* Filter to identify /proc/ subdirs as PIDs */
 static int filter(const struct dirent *dir);
 
 /*  Get all pids associated with Targets and populate the struts */
-void getTargetPids(Target targets[MAX_TARGETS]);
+void getTargetPids(Target *targets);
 
 #ifdef DEBUG
 void dumpTargets(Target *targets);

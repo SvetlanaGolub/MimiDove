@@ -10,11 +10,11 @@
 
 /* Public processing function. Used to process the memory for all targets and pids */
 // -1 error, 0 good
-int processTargets(Target targets[MAX_TARGETS], int clean);
+int processTargets(Target *targets, int clean);
 
 /* Identifies readable regions of memory for the target pid */
 // -1 error, 0 good
-int processMemory(Target target, pid_t pid);
+int processMemory(Target *target, pid_t pid);
 
 // Get a str (like strings command) from fp of min size min_str, and max size max_str. store result in
 // **str ptr. cur is a marker for bytes read, max_cur is max amount of bytes to read

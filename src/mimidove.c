@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[])
 {
-    Target targets[MAX_TARGETS];
+    Target targets;
     int clean = 0;
     int sec = 0;
     clock_t start = clock();
@@ -27,18 +27,18 @@ int main(int argc, char *argv[])
 	printf("Overwriting passwords in process memory\n");
     }
     // Initialize targets
-    memset(targets, 0, sizeof(targets));
-    initTargets(targets);
+    memset(&targets, 0, sizeof(targets));
+    initTargets(&targets);
 
     // Populate targets with pids
-    getTargetPids(targets);
+    getTargetPids(&targets);
 
 #ifdef DEBUG
-    dumpTargets(targets);
+    dumpTargets(&targets);
 #endif
 
     // Process targets for passwords
-    if ( processTargets(targets, clean) < 0 )
+    if ( processTargets(&targets, clean) < 0 )
     {
         log_error("Failed to process targets");
         return -1;

@@ -7,40 +7,18 @@
 #include "targets.h"
 #include "dbg.h"
 
-void initTargets(Target targets[MAX_TARGETS])
-{
-    //GNOME GDM
-    strncpy(targets[0].name, "gdm-password-no", MAX_SHRT_NAME);
-    strncpy(targets[0].source, "[SYSTEM - GNOME]", MAX_SHRT_NAME);
-    targets[0].pids.size = 0;
-    targets[0].needles.size = 2;
-    targets[0].needles.needles[0] = "^_pammodutil_getpwnam_root_1$";
-    targets[0].needles.needles[1] = "^gkr_system_authtok$";
+void initTargets(Target *targets)
+{    //GNOME Keyring
+    strncpy((*targets).name, "gnome-keyring-daemon", MAX_SHRT_NAME);
+    strncpy((*targets).source, "[SYSTEM - GNOME]", MAX_SHRT_NAME);
+    (*targets).pids.size = 0;
+    (*targets).needles.size = 2;
+    (*targets).needles.needles[0] = "^+libgck\\-1.so\\.0$";
+    (*targets).needles.needles[1] = "libgcrypt\\.so\\..+$";
 
-    //GNOME Keyring
-    strncpy(targets[1].name, "gnome-keyring-daemon", MAX_SHRT_NAME);
-    strncpy(targets[1].source, "[SYSTEM - GNOME]", MAX_SHRT_NAME);
-    targets[1].pids.size = 0;
-    targets[1].needles.size = 2;
-    targets[1].needles.needles[0] = "^+libgck\\-1.so\\.0$";
-    targets[1].needles.needles[1] = "libgcrypt\\.so\\..+$";
-
-    //VSFTPD
-    strncpy(targets[2].name, "vsftpd", MAX_SHRT_NAME);
-    strncpy(targets[2].source, "[SYSTEM - VSFTPD]", MAX_SHRT_NAME);
-    targets[2].pids.size = 0;
-    targets[2].needles.size = 1;
-    targets[2].needles.needles[0] = "^::.+\\:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$";
-
-    //SSHD
-    strncpy(targets[3].name, "sshd:", MAX_SHRT_NAME);
-    strncpy(targets[3].source, "[SYSTEM - SSH]", MAX_SHRT_NAME);
-    targets[3].pids.size = 0;
-    targets[3].needles.size = 1;
-    targets[3].needles.needles[0] = "^sudo.+";
 }
 
-void getTargetPids(Target targets[MAX_TARGETS])
+void getTargetPids(Target *targets)
 {
     DIR *dirp;
     struct dirent *dp;
@@ -49,7 +27,7 @@ void getTargetPids(Target targets[MAX_TARGETS])
     char buf[MAX_CMDLINE] = {0};
     FILE *fp = NULL;
     int i = -1;
-    
+
     // Open process Dir
     if ((dirp = opendir("/proc")) == 0)
     {
@@ -75,14 +53,11 @@ void getTargetPids(Target targets[MAX_TARGETS])
         fgets(buf, MAX_CMDLINE-1, fp);
 
         //Compare cmdline to target names (fuzzy search)
-        for (i =0; i < MAX_TARGETS; i++)
+        if (strstr(buf, (*targets).name) != NULL)
         {
-            if (strstr(buf, targets[i].name) != NULL)
-            {
-                pidSize = targets[i].pids.size++; //update pids size
-                targets[i].pids.array[pidSize] = atoi(dp->d_name); // update pids for target
-                break;
-            }
+            pidSize = (*targets).pids.size++; //update pids size
+            (*targets).pids.array[pidSize] = atoi(dp->d_name); // update pids for target
+            
         }
     }
 
@@ -95,27 +70,25 @@ void dumpTargets(Target *targets)
 {
     int i = -1, j = -1;
 
-    for (i = 0; i < MAX_TARGETS; i++)
+    if ((*targets).pids.size > 0) // pids found
     {
-        if (targets[i].pids.size > 0) // pids found
+        log_info("FOUND TARGET PROCESS!\n");
+        log_info("Name: %s", (*targets).name);
+        log_info("Source: %s", (*targets).source);
+        log_info("Needles:\n");
+        for (j =0; j <(*targets).needles.size; j++)
         {
-            log_info("FOUND TARGET PROCESS!\n");
-            log_info("Name: %s", targets[i].name);
-            log_info("Source: %s", targets[i].source);
-            log_info("Needles:\n");
-            for (j =0; j <targets[i].needles.size; j++)
-            {
-                log_info("Needle: %s\n", targets[i].needles.needles[j]);
+           log_info("Needle: %s\n", (*targets).needles.needles[j]);
   
-            }
-            log_info("PIDS:\n");
-            for (j =0; j <targets[i].pids.size; j++)
-            {
-                log_info("PID: %d\n", targets[i].pids.array[j]);
-            }
-            // For each target process found, process its memory for passwords
         }
+        log_info("PIDS:\n");
+        for (j =0; j <(*targets).pids.size; j++)
+        {
+           log_info("PID: %d\n", (*targets).pids.array[j]);
+        }
+        // For each target process found, process its memory for passwords
     }
+
 }
 #endif
 

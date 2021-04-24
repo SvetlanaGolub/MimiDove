@@ -21,11 +21,11 @@ int g_nusers;
 int clean;
 
 // Iterate discovered target processes - proccess memory for each one
-int processTargets(Target targets[MAX_TARGETS], int if_clean)
+int processTargets(Target *targets, int if_clean)
 {
     int i = -1, j = -1;
     int ret = -1;
-
+    
     
     clean = if_clean;
 
@@ -38,19 +38,18 @@ int processTargets(Target targets[MAX_TARGETS], int if_clean)
         goto DONE;
     }
 
-    for (i = 0; i < MAX_TARGETS; i++)
+    if ((*targets).pids.size > 0) // if pids found for target
     {
-        if (targets[i].pids.size > 0) // if pids found for target
-        {
-            printf("[+] Searching: %s (%s)\n", targets[i].source, targets[i].name);
-            for (j = 0; j < targets[i].pids.size; j ++)
+
+        printf("[+] Searching: %s (%s)\n", (*targets).source, (*targets).name);
+        for (j = 0; j < (*targets).pids.size; j ++)
+        {  
+           if ( processMemory(targets, (*targets).pids.array[j]) < 0 )
             {
-                if ( processMemory(targets[i], targets[i].pids.array[j]) < 0 )
-                {
-                    log_warn("Failed to process pid %d", targets[i].pids.array[j]);
-                }
+               log_warn("Failed to process pid %d", (*targets).pids.array[j]);
             }
         }
+ 
     }
     ret = 0;
     DONE:
@@ -59,7 +58,7 @@ int processTargets(Target targets[MAX_TARGETS], int if_clean)
 }
 
 // Find valid memory regions for given target and pid - process region for each one
-int processMemory(Target target, pid_t pid)
+int processMemory(Target *target, pid_t pid)
 {
     FILE *maps_fp = NULL, *mem_fp = NULL;
     char maps_path[MAX_PATH] = {0};
@@ -102,8 +101,8 @@ int processMemory(Target target, pid_t pid)
 	region ++;
 	if (region < 23)
 	    continue;
-        if (strstr(atts, "rw") == NULL) // Only parse read/write regions
-            continue;
+    if (strstr(atts, "rw") == NULL) // Only parse read/write regions
+        continue;
 	ret = processRegion(mem_fp, start, end);
         if ( ret < 0 )
         {
@@ -196,8 +195,6 @@ int processRegion(FILE *fp, unsigned long start, unsigned long end )
         if ( str_len == -2 ) //hit max_cur! - no strings found
             break;
 
-        // TODO implement target needles to limit the number
-        // of crypt() calls
         // Compare string hash against user hashes for a match
 	int check = CheckForUserHash(g_users, g_nusers, str, clean);
         if ( check == 1 )
