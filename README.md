@@ -1,6 +1,6 @@
 #  <img src="https://github.com/SvetlanaGolub/MimiDove/blob/master/dove.png" width="80" height="80">MimiDove
 
-Tool to dump passwords from **gnome-keyring-daemon** process memory.
+Tool for cleaning passwords from **gnome-keyring-daemon** process memory.
 
 ## Features :
 - Dump passwords from process (based on @huntergregal's [MimiPenguin](https://github.com/huntergregal/mimipenguin)) :
